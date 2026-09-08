@@ -60,31 +60,29 @@ export const ChatArea = ({ activeChat, onBack }) => {
   const isPartnerOnline = partnerId ? isUserOnline(partnerId) : false;
   const isPartnerTyping = activeChat ? typingMap[activeChat._id] : null;
 
-  // Fetch messages when activeChat changes
+  // Fetch messages when activeChat changes and auto-poll for real-time sync
   useEffect(() => {
     if (!activeChat?._id) return;
 
     const fetchMessages = async () => {
-      setLoading(true);
       try {
         const res = await api.get(`/messages/${activeChat._id}`);
         if (res.data?.success) {
           setMessages(res.data.data.messages || []);
-          // Mark all as read
           api.put(`/messages/chat/${activeChat._id}/read-all`).catch(() => {});
-          if (socket) {
-            socket.emit('mark-read', { chatId: activeChat._id });
-          }
         }
       } catch (err) {
         console.error('Error fetching messages:', err);
-      } finally {
-        setLoading(false);
       }
     };
 
-    fetchMessages();
+    setLoading(true);
+    fetchMessages().finally(() => setLoading(false));
     setReplyMessage(null);
+
+    // Continuous polling ensures incoming messages sync even if WebSockets are down
+    const pollInterval = setInterval(fetchMessages, 3000);
+    return () => clearInterval(pollInterval);
   }, [activeChat?._id]);
 
   // Listen for real-time socket events
@@ -619,6 +617,9 @@ export const ChatArea = ({ activeChat, onBack }) => {
         activeChat={activeChat}
         replyMessage={replyMessage}
         onCancelReply={() => setReplyMessage(null)}
+        onMessageSent={(newMsg) => {
+          setMessages((prev) => (prev.some((m) => m._id === newMsg._id) ? prev : [...prev, newMsg]));
+        }}
       />
 
       {/* 4. LIGHTBOX MEDIA VIEWER */}

@@ -64,8 +64,26 @@ export const ChatInput = ({ activeChat, replyMessage, onCancelReply, onMessageSe
     }
   };
 
+  // Dispatch message via Socket and REST API fallback
+  const dispatchMessage = async (messageData) => {
+    // 1. Emit via socket if connected
+    if (socket && socket.connected) {
+      socket.emit('send-message', messageData);
+    }
+
+    // 2. Always persist via REST API (ensures delivery and persistence on Vercel/serverless)
+    try {
+      const res = await api.post('/messages', messageData);
+      if (res.data?.success && onMessageSent) {
+        onMessageSent(res.data.data);
+      }
+    } catch (err) {
+      console.error('API send failed:', err);
+    }
+  };
+
   // SEND TEXT MESSAGE
-  const handleSendText = (e) => {
+  const handleSendText = async (e) => {
     e?.preventDefault();
     if (!text.trim() || !activeChat) return;
 
@@ -76,13 +94,11 @@ export const ChatInput = ({ activeChat, replyMessage, onCancelReply, onMessageSe
       replyTo: replyMessage?._id || null,
     };
 
-    if (socket) {
-      socket.emit('send-message', messageData);
-    }
-
     setText('');
     setShowEmojis(false);
     onCancelReply();
+
+    await dispatchMessage(messageData);
   };
 
   // UPLOAD ATTACHMENT
@@ -118,10 +134,8 @@ export const ChatInput = ({ activeChat, replyMessage, onCancelReply, onMessageSe
           replyTo: replyMessage?._id || null,
         };
 
-        if (socket) {
-          socket.emit('send-message', messageData);
-        }
         onCancelReply();
+        await dispatchMessage(messageData);
       }
     } catch (err) {
       alert(err.response?.data?.message || 'File upload failed');
@@ -189,9 +203,9 @@ export const ChatInput = ({ activeChat, replyMessage, onCancelReply, onMessageSe
           headers: { 'Content-Type': 'multipart/form-data' },
         });
 
-        if (res.data?.success && socket && activeChat) {
+        if (res.data?.success && activeChat) {
           const { fileUrl } = res.data.data;
-          socket.emit('send-message', {
+          const voiceData = {
             chatId: activeChat._id,
             content: '🎤 Voice message',
             messageType: 'voice',
@@ -199,8 +213,9 @@ export const ChatInput = ({ activeChat, replyMessage, onCancelReply, onMessageSe
             voiceDuration: recordDuration,
             fileUrl,
             replyTo: replyMessage?._id || null,
-          });
+          };
           onCancelReply();
+          await dispatchMessage(voiceData);
         }
       } catch (err) {
         alert('Failed to send voice note');
