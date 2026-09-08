@@ -1,0 +1,122 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-[#0b141a] text-[#e9edef] overflow-hidden select-none font-['Plus_Jakarta_Sans',sans-serif];
+  }
+}
+
+/* Custom Scrollbar - WhatsApp Style */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(134, 150, 160, 0.25);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 168, 132, 0.5);
+}
+
+/* Glassmorphic Panel utility */
+.glass-panel {
+  background: rgba(17, 27, 33, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* 1. SIGNATURE WHATSAPP OBSIDIAN WALLPAPER (DEFAULT) */
+.chat-wallpaper, .wallpaper-obsidian {
+  background-color: #0b141a;
+  background-image: 
+    radial-gradient(circle at 50% 30%, rgba(0, 168, 132, 0.05) 0%, transparent 65%),
+    linear-gradient(rgba(11, 20, 26, 0.92), rgba(11, 20, 26, 0.92)),
+    url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M15 22c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8zm60 30c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8zm-48-8c2.209 0 4-1.791 4-4s-1.791-4-4-4-4 1.791-4 4 1.791 4 4 4zm72 38c2.209 0 4-1.791 4-4s-1.791-4-4-4-4 1.791-4 4 1.791 4 4 4zM42 108c2.209 0 4-1.791 4-4s-1.791-4-4-4-4 1.791-4 4 1.791 4 4 4zm68-90c2.209 0 4-1.791 4-4s-1.791-4-4-4-4 1.791-4 4 1.791 4 4 4zM16 102c3.314 0 6-2.686 6-6s-2.686-6-6-6-6 2.686-6 6 2.686 6 6 6zm36-78c3.314 0 6-2.686 6-6s-2.686-6-6-6-6 2.686-6 6 2.686 6 6 6zm28-14c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-8 72c3.314 0 6-2.686 6-6s-2.686-6-6-6-6 2.686-6 6 2.686 6 6 6zm38 28c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zM40 76c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm70-16c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-12-26c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM74 110c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM44 50c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM16 72c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3z' fill='%2300a884' fill-opacity='0.08' fill-rule='evenodd'/%3E%3C/svg%3E");
+}
+
+/* 2. MIDNIGHT CYBER WALLPAPER */
+.wallpaper-midnight {
+  background-color: #06090e;
+  background-image: 
+    radial-gradient(circle at 20% 20%, rgba(6, 182, 212, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(0, 168, 132, 0.08) 0%, transparent 50%),
+    linear-gradient(rgba(6, 9, 14, 0.94), rgba(6, 9, 14, 0.94)),
+    url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%2306b6d4' fill-opacity='0.06' fill-rule='evenodd'%3E%3Ccircle cx='40' cy='40' r='3'/%3E%3Ccircle cx='10' cy='20' r='2'/%3E%3Ccircle cx='70' cy='60' r='2'/%3E%3Ccircle cx='60' cy='15' r='1.5'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* 3. EMERALD GLOW WALLPAPER */
+.wallpaper-emerald {
+  background-color: #071512;
+  background-image: 
+    radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.12) 0%, transparent 70%),
+    linear-gradient(rgba(7, 21, 18, 0.93), rgba(7, 21, 18, 0.93)),
+    url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7z' fill='%2310b981' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
+}
+
+/* 4. LIGHT THEME WALLPAPER */
+html:not(.dark) .chat-wallpaper,
+html:not(.dark) .wallpaper-obsidian,
+html:not(.dark) .wallpaper-light {
+  background-color: #efeae2;
+  background-image: 
+    linear-gradient(rgba(239, 234, 226, 0.93), rgba(239, 234, 226, 0.93)),
+    url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3z' fill='%23667781' fill-opacity='0.12' fill-rule='evenodd'/%3E%3C/svg%3E");
+}
+
+/* Speech Bubble Tail Styles */
+.bubble-outgoing {
+  background: linear-gradient(135deg, #005c4b 0%, #026955 100%);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+.bubble-incoming {
+  background: #202c33;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+html:not(.dark) .bubble-outgoing {
+  background: linear-gradient(135deg, #d9fdd3 0%, #d4f8ce 100%);
+  color: #111b21;
+}
+
+html:not(.dark) .bubble-incoming {
+  background: #ffffff;
+  color: #111b21;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Animations */
+@keyframes voiceWave {
+  0%, 100% { height: 6px; }
+  50% { height: 26px; }
+}
+
+.voice-bar {
+  animation: voiceWave 1.2s ease-in-out infinite;
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeInScale 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
