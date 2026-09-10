@@ -29,17 +29,26 @@ const api = axios.create({
   },
 });
 
-// Request interceptor to attach JWT
+// Request interceptor to attach JWT and correctly handle FormData
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('aurawave_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    // If sending FormData, delete Content-Type so browser sets correct multipart/form-data boundary
+    if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
+    }
     return config;
   },
   (error) => Promise.reject(error)
 );
+
+// Pre-warm server in background on app load (helps Render free-tier cold starts)
+if (typeof window !== 'undefined') {
+  axios.get(`${API_BASE_URL}/health`, { timeout: 8000 }).catch(() => {});
+}
 
 // Response interceptor for handling 401
 api.interceptors.response.use(

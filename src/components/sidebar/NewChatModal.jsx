@@ -16,7 +16,10 @@ export const NewChatModal = ({ onClose, onChatCreated }) => {
   const [creatingGroup, setCreatingGroup] = useState(false);
 
   useEffect(() => {
-    fetchUsers(search);
+    const timer = setTimeout(() => {
+      fetchUsers(search);
+    }, 250);
+    return () => clearTimeout(timer);
   }, [search]);
 
   const fetchUsers = async (query = '') => {

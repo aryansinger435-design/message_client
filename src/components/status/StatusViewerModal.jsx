@@ -171,13 +171,18 @@ export const StatusViewerModal = ({ userGroup, onClose, isMine = false, onDelete
               )}
             </div>
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-black">
+            <div className="w-full h-full flex flex-col items-center justify-center bg-black">
               <video
                 src={getFullMediaUrl(activeStatus.content)}
                 autoPlay
                 playsInline
                 className="w-full h-full object-contain"
               />
+              {activeStatus.caption && (
+                <div className="absolute bottom-16 left-4 right-4 bg-black/60 backdrop-blur-sm p-3 2xl:p-4 rounded-xl 2xl:rounded-2xl text-center text-sm 2xl:text-base text-white font-medium">
+                  {activeStatus.caption}
+                </div>
+              )}
             </div>
           )}
 

@@ -139,10 +139,14 @@ export const ChatArea = ({ activeChat, onBack }) => {
     fetchMessages().finally(() => setLoading(false));
     setReplyMessage(null);
 
-    // Continuous polling ensures incoming messages sync even if WebSockets are down
-    const pollInterval = setInterval(fetchMessages, 3000);
+    // Only poll as a backup if WebSockets are disconnected or reconnecting
+    const pollInterval = setInterval(() => {
+      if (!socket || !socket.connected) {
+        fetchMessages();
+      }
+    }, 5000);
     return () => clearInterval(pollInterval);
-  }, [activeChat?._id]);
+  }, [activeChat?._id, socket?.connected]);
 
   // Listen for real-time socket events
   useEffect(() => {
@@ -155,15 +159,26 @@ export const ChatArea = ({ activeChat, onBack }) => {
       const msgChatId = typeof newMsg.chatId === 'object' ? newMsg.chatId?._id : newMsg.chatId;
       if (String(msgChatId) === String(activeChat._id)) {
         setMessages((prev) => {
-          if (
-            prev.some(
-              (m) =>
-                m._id === newMsg._id ||
-                (m.clientTempId && newMsg.clientTempId && m.clientTempId === newMsg.clientTempId)
-            )
-          ) {
-            return prev;
+          // Check if message already exists by _id
+          const existingById = prev.findIndex((m) => m._id === newMsg._id);
+          if (existingById > -1) {
+            const next = [...prev];
+            next[existingById] = newMsg;
+            return next;
           }
+
+          // Check if message matches an optimistic message by clientTempId
+          if (newMsg.clientTempId) {
+            const existingByTemp = prev.findIndex(
+              (m) => m.clientTempId && m.clientTempId === newMsg.clientTempId
+            );
+            if (existingByTemp > -1) {
+              const next = [...prev];
+              next[existingByTemp] = newMsg;
+              return next;
+            }
+          }
+
           return [...prev, newMsg];
         });
 
@@ -692,14 +707,15 @@ export const ChatArea = ({ activeChat, onBack }) => {
         onCancelReply={() => setReplyMessage(null)}
         onMessageSent={(newMsg) => {
           setMessages((prev) => {
-            if (
-              prev.some(
-                (m) =>
-                  m._id === newMsg._id ||
-                  (m.clientTempId && newMsg.clientTempId && m.clientTempId === newMsg.clientTempId)
-              )
-            ) {
-              return prev;
+            const existingIndex = prev.findIndex(
+              (m) =>
+                m._id === newMsg._id ||
+                (m.clientTempId && newMsg.clientTempId && m.clientTempId === newMsg.clientTempId)
+            );
+            if (existingIndex > -1) {
+              const next = [...prev];
+              next[existingIndex] = newMsg;
+              return next;
             }
             return [...prev, newMsg];
           });

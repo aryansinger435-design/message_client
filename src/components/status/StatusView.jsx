@@ -95,7 +95,6 @@ export const StatusView = () => {
           backgroundColor: selectedBg,
         });
       } else {
-        // Send FormData without overriding Content-Type so browser sets correct boundary
         const formData = new FormData();
         const isVideo = mediaFile.type?.startsWith('video/');
         formData.append('type', isVideo ? 'video' : 'image');
@@ -103,10 +102,15 @@ export const StatusView = () => {
         if (caption.trim()) {
           formData.append('caption', caption.trim());
         }
-        res = await api.post('/status', formData);
+        res = await api.post('/status', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
       }
 
       if (res.data?.success) {
+        if (res.data.data) {
+          setMyStatuses((prev) => [res.data.data, ...prev.filter((s) => s._id !== res.data.data._id)]);
+        }
         setCreateModalOpen(false);
         setTextContent('');
         setMediaFile(null);
@@ -187,11 +191,17 @@ export const StatusView = () => {
                 </div>
               </div>
 
-              {myStatuses.length === 0 && (
-                <span className="absolute bottom-0 right-0 w-4 h-4 2xl:w-5 2xl:h-5 bg-[#00a884] text-[#111b21] rounded-full flex items-center justify-center ring-2 ring-[#202c33]">
-                  <Plus className="w-3 h-3 2xl:w-4 2xl:h-4 stroke-[3]" />
-                </span>
-              )}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCreateModalOpen(true);
+                }}
+                className="absolute bottom-0 right-0 w-4 h-4 2xl:w-5 2xl:h-5 bg-[#00a884] hover:bg-[#02906f] text-[#111b21] rounded-full flex items-center justify-center ring-2 ring-[#202c33] transition cursor-pointer"
+                title="Add status update"
+              >
+                <Plus className="w-3 h-3 2xl:w-4 2xl:h-4 stroke-[3]" />
+              </button>
             </div>
 
             <div>
@@ -211,10 +221,20 @@ export const StatusView = () => {
                 setStatusType('text');
                 setCreateModalOpen(true);
               }}
-              className="p-2.5 2xl:p-3.5 rounded-full bg-[#111b21] text-[#8696a0] hover:text-[#00a884] hover:bg-[#2a3942] transition min-w-[44px] min-h-[44px] flex items-center justify-center"
+              className="p-2.5 2xl:p-3.5 rounded-full bg-[#111b21] text-[#8696a0] hover:text-[#00a884] hover:bg-[#2a3942] transition min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer"
               title="Text Status"
             >
               <Type className="w-4 h-4 2xl:w-5 2xl:h-5" />
+            </button>
+            <button
+              onClick={() => {
+                setStatusType('media');
+                setCreateModalOpen(true);
+              }}
+              className="p-2.5 2xl:p-3.5 rounded-full bg-[#111b21] text-[#8696a0] hover:text-[#00a884] hover:bg-[#2a3942] transition min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer"
+              title="Photo / Video Status"
+            >
+              <Camera className="w-4 h-4 2xl:w-5 2xl:h-5" />
             </button>
           </div>
         </div>

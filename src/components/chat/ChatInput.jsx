@@ -70,6 +70,29 @@ export const ChatInput = ({ activeChat, replyMessage, onCancelReply, onMessageSe
     const clientTempId = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
     const payload = { ...messageData, clientTempId };
 
+    // Optimistic UI update: Instantly render the message in the sender's UI (0ms delay)
+    if (onMessageSent) {
+      const optimisticMessage = {
+        _id: clientTempId,
+        clientTempId,
+        chatId: activeChat._id,
+        sender: user,
+        content: messageData.content,
+        messageType: messageData.messageType || 'text',
+        replyTo: replyMessage || null,
+        fileUrl: messageData.fileUrl || null,
+        fileName: messageData.fileName || null,
+        fileSize: messageData.fileSize || null,
+        voiceMessage: messageData.voiceMessage || null,
+        voiceDuration: messageData.voiceDuration || null,
+        reactions: [],
+        readBy: [user?._id || 'me'],
+        createdAt: new Date().toISOString(),
+        isOptimistic: true,
+      };
+      onMessageSent(optimisticMessage);
+    }
+
     // 1. Primary: Real-time WebSocket emission (socket.handler saves to DB and broadcasts to room)
     if (socket && socket.connected) {
       socket.emit('send-message', payload);

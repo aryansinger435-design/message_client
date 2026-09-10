@@ -60,8 +60,11 @@ export const Sidebar = ({
     if (!socket) return;
 
     const handleNewMessage = (newMsg) => {
+      const msgChatId = String(
+        typeof newMsg.chatId === 'object' ? (newMsg.chatId?._id || newMsg.chatId) : newMsg.chatId
+      );
       setChats((prev) => {
-        const chatIdx = prev.findIndex((c) => c._id === newMsg.chatId);
+        const chatIdx = prev.findIndex((c) => String(c._id) === msgChatId);
         if (chatIdx > -1) {
           const updatedChat = {
             ...prev[chatIdx],
