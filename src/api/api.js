@@ -16,7 +16,10 @@ const getDefaultBaseUrl = () => {
   return 'https://message-server-uaik.onrender.com';
 };
 
-const rawUrl = import.meta.env.VITE_API_URL || getDefaultBaseUrl();
+let rawUrl = import.meta.env.VITE_API_URL;
+if (!rawUrl || rawUrl.includes('message-server-six.vercel.app') || rawUrl.includes('undefined')) {
+  rawUrl = getDefaultBaseUrl();
+}
 export const API_BASE_URL = rawUrl.replace(/\/+$/, '');
 
 const api = axios.create({
