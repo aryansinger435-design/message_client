@@ -248,7 +248,11 @@ export const CallProvider = ({ children }) => {
 
       if (peerConnectionRef.current && signal) {
         try {
-          await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(signal));
+          if (peerConnectionRef.current.signalingState === 'have-local-offer') {
+            await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(signal));
+          } else {
+            console.log('Skipping duplicate answer. Current signalingState:', peerConnectionRef.current.signalingState);
+          }
 
           // Flush any queued ICE candidates
           while (pendingCandidates.current.length > 0) {

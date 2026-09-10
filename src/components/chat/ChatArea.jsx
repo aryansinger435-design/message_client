@@ -24,9 +24,52 @@ import { useCall } from '../../context/CallContext';
 import { ChatInput } from './ChatInput';
 import { AuraWaveLogo } from '../common/AuraWaveLogo';
 
+// Format last seen timestamp in WhatsApp style (just now, Xm ago, today at..., yesterday at...)
+const formatLastSeen = (dateInput) => {
+  if (!dateInput) return null;
+  const date = new Date(dateInput);
+  if (isNaN(date.getTime())) return null;
+
+  const now = new Date();
+  const diffMs = Math.max(0, now - date);
+  const diffMinutes = Math.floor(diffMs / 60000);
+
+  if (diffMinutes < 1) {
+    return 'last seen just now';
+  }
+  if (diffMinutes < 60) {
+    return `last seen ${diffMinutes}m ago`;
+  }
+
+  const isToday =
+    date.getDate() === now.getDate() &&
+    date.getMonth() === now.getMonth() &&
+    date.getFullYear() === now.getFullYear();
+
+  const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  if (isToday) {
+    return `last seen today at ${timeStr}`;
+  }
+
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const isYesterday =
+    date.getDate() === yesterday.getDate() &&
+    date.getMonth() === yesterday.getMonth() &&
+    date.getFullYear() === yesterday.getFullYear();
+
+  if (isYesterday) {
+    return `last seen yesterday at ${timeStr}`;
+  }
+
+  const dateStr = date.toLocaleDateString([], { day: '2-digit', month: '2-digit', year: '2-digit' });
+  return `last seen ${dateStr} at ${timeStr}`;
+};
+
 export const ChatArea = ({ activeChat, onBack }) => {
   const { user } = useAuth();
-  const { socket, isUserOnline, typingMap } = useSocket();
+  const { socket, isUserOnline, getLastSeen, typingMap } = useSocket();
   const { startCall } = useCall();
 
   const [messages, setMessages] = useState([]);
@@ -59,6 +102,8 @@ export const ChatArea = ({ activeChat, onBack }) => {
 
   const partnerId = partner ? (typeof partner === 'object' ? (partner._id || partner.id) : partner) : null;
   const isPartnerOnline = partnerId ? isUserOnline(partnerId) : false;
+  const partnerLastSeen = partnerId ? (getLastSeen(partnerId) || partner?.lastSeen) : null;
+  const formattedLastSeen = formatLastSeen(partnerLastSeen);
   const isPartnerTyping = activeChat ? typingMap[activeChat._id] : null;
 
   // Fetch messages when activeChat changes and auto-poll for real-time sync
@@ -319,8 +364,8 @@ export const ChatArea = ({ activeChat, onBack }) => {
                 <span className="text-[#25d366] font-medium animate-pulse">typing...</span>
               ) : isPartnerOnline ? (
                 <span className="text-[#25d366]">online</span>
-              ) : partner?.lastSeen ? (
-                `last seen ${new Date(partner.lastSeen).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+              ) : formattedLastSeen ? (
+                <span>{formattedLastSeen}</span>
               ) : (
                 isGroup ? `${activeChat.participants?.length || 0} participants` : 'offline'
               )}

@@ -11,6 +11,7 @@ export const SocketProvider = ({ children }) => {
   const [onlineUsers, setOnlineUsers] = useState(new Set());
   const [typingMap, setTypingMap] = useState({}); // { [chatId]: { userId, username } }
 
+  const [lastSeenMap, setLastSeenMap] = useState({}); // { [userId]: Date/string }
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
@@ -39,19 +40,29 @@ export const SocketProvider = ({ children }) => {
     });
 
     newSocket.on('online-users', (users) => {
-      setOnlineUsers(new Set(users));
+      setOnlineUsers(new Set(users.map((u) => (typeof u === 'object' ? (u._id || u.id) : u).toString())));
     });
 
-    newSocket.on('user-status', ({ userId, status }) => {
+    newSocket.on('user-status', ({ userId, status, lastSeen }) => {
+      if (!userId) return;
+      const uIdStr = (typeof userId === 'object' ? (userId._id || userId.id) : userId).toString();
+
       setOnlineUsers((prev) => {
         const next = new Set(prev);
         if (status === 'online') {
-          next.add(userId.toString());
+          next.add(uIdStr);
         } else {
-          next.delete(userId.toString());
+          next.delete(uIdStr);
         }
         return next;
       });
+
+      if (lastSeen) {
+        setLastSeenMap((prev) => ({
+          ...prev,
+          [uIdStr]: lastSeen,
+        }));
+      }
     });
 
     newSocket.on('user-typing', ({ chatId, userId, username, isTyping }) => {
@@ -78,26 +89,37 @@ export const SocketProvider = ({ children }) => {
     };
   }, [token, user?._id]);
 
-  // Immediately wake up & reconnect socket when tab becomes visible or network reconnects
+  // Immediately wake up & reconnect socket when tab becomes visible, focused, or phone unlocked
   useEffect(() => {
     const handleWake = () => {
       if (socket && !socket.connected) {
-        console.log('🔄 Tab became visible/online -> actively reconnecting socket');
+        console.log('🔄 Device/Tab resumed -> immediately reconnecting socket');
         socket.connect();
       }
     };
 
     document.addEventListener('visibilitychange', handleWake);
     window.addEventListener('online', handleWake);
+    window.addEventListener('focus', handleWake);
+    window.addEventListener('pageshow', handleWake);
     return () => {
       document.removeEventListener('visibilitychange', handleWake);
       window.removeEventListener('online', handleWake);
+      window.removeEventListener('focus', handleWake);
+      window.removeEventListener('pageshow', handleWake);
     };
   }, [socket]);
 
   const isUserOnline = (userId) => {
     if (!userId) return false;
-    return onlineUsers.has(userId.toString());
+    const idStr = (typeof userId === 'object' ? (userId._id || userId.id) : userId)?.toString();
+    return onlineUsers.has(idStr);
+  };
+
+  const getLastSeen = (userId) => {
+    if (!userId) return null;
+    const idStr = (typeof userId === 'object' ? (userId._id || userId.id) : userId)?.toString();
+    return lastSeenMap[idStr] || null;
   };
 
   return (
@@ -107,6 +129,8 @@ export const SocketProvider = ({ children }) => {
         isConnected,
         onlineUsers,
         isUserOnline,
+        lastSeenMap,
+        getLastSeen,
         typingMap,
       }}
     >

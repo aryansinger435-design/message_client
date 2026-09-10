@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Camera, Type, Image as ImageIcon, X, Loader2, Sparkles, Check } from 'lucide-react';
 import api, { getFullMediaUrl } from '../../api/api';
 import { useAuth } from '../../context/AuthContext';
+import { useSocket } from '../../context/SocketContext';
 import { StatusViewerModal } from './StatusViewerModal';
 
 const COLOR_PALETTE = [
@@ -16,6 +17,7 @@ const COLOR_PALETTE = [
 
 export const StatusView = () => {
   const { user } = useAuth();
+  const { socket } = useSocket();
 
   const [myStatuses, setMyStatuses] = useState([]);
   const [recentGroups, setRecentGroups] = useState([]);
@@ -35,12 +37,7 @@ export const StatusView = () => {
   const [viewingGroup, setViewingGroup] = useState(null);
   const [isViewingMine, setIsViewingMine] = useState(false);
 
-  useEffect(() => {
-    fetchStatuses();
-  }, []);
-
-  const fetchStatuses = async () => {
-    setLoading(true);
+  const fetchStatuses = useCallback(async () => {
     try {
       const [resMy, resRecent] = await Promise.all([
         api.get('/status/me'),
@@ -51,10 +48,28 @@ export const StatusView = () => {
       if (resRecent.data?.success) setRecentGroups(resRecent.data.data || []);
     } catch (err) {
       console.error('Error loading statuses:', err);
-    } finally {
-      setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    setLoading(true);
+    fetchStatuses().finally(() => setLoading(false));
+  }, [fetchStatuses]);
+
+  // Real-time socket sync for new status posts & views
+  useEffect(() => {
+    if (!socket) return;
+    const handleStatusUpdate = () => {
+      fetchStatuses();
+    };
+
+    socket.on('new-status', handleStatusUpdate);
+    socket.on('status-viewed', handleStatusUpdate);
+    return () => {
+      socket.off('new-status', handleStatusUpdate);
+      socket.off('status-viewed', handleStatusUpdate);
+    };
+  }, [socket, fetchStatuses]);
 
   const handleMediaSelect = (e) => {
     const file = e.target.files?.[0];
@@ -71,20 +86,25 @@ export const StatusView = () => {
 
     setSubmitting(true);
     try {
-      const formData = new FormData();
-      formData.append('type', statusType);
-
+      let res;
       if (statusType === 'text') {
-        formData.append('content', textContent.trim());
-        formData.append('backgroundColor', selectedBg);
+        // Send pure JSON for text status
+        res = await api.post('/status', {
+          type: 'text',
+          content: textContent.trim(),
+          backgroundColor: selectedBg,
+        });
       } else {
+        // Send FormData without overriding Content-Type so browser sets correct boundary
+        const formData = new FormData();
+        const isVideo = mediaFile.type?.startsWith('video/');
+        formData.append('type', isVideo ? 'video' : 'image');
         formData.append('media', mediaFile);
-        formData.append('caption', caption.trim());
+        if (caption.trim()) {
+          formData.append('caption', caption.trim());
+        }
+        res = await api.post('/status', formData);
       }
-
-      const res = await api.post('/status', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
 
       if (res.data?.success) {
         setCreateModalOpen(false);
@@ -95,7 +115,8 @@ export const StatusView = () => {
         fetchStatuses();
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to post status');
+      console.error('Failed to post status:', err);
+      alert(err.response?.data?.message || err.message || 'Failed to post status. Please try again.');
     } finally {
       setSubmitting(false);
     }
