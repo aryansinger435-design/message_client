@@ -49,12 +49,12 @@ export const ChatArea = ({ activeChat, onBack }) => {
 
   // Determine chat partner (for 1-on-1 private chat)
   const isGroup = activeChat?.type === 'group';
-  const partner = isGroup
+  const myId = String(user?._id || user?.id || '');
+  const partner = isGroup || !myId
     ? null
     : activeChat?.participants?.find((p) => {
         const pId = typeof p === 'object' && p !== null ? (p._id || p.id) : p;
-        const uId = user?._id || user?.id;
-        return String(pId) !== String(uId);
+        return pId && String(pId) !== myId;
       });
 
   const partnerId = partner ? (typeof partner === 'object' ? (partner._id || partner.id) : partner) : null;

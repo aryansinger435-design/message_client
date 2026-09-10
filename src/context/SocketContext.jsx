@@ -11,11 +11,14 @@ export const SocketProvider = ({ children }) => {
   const [onlineUsers, setOnlineUsers] = useState(new Set());
   const [typingMap, setTypingMap] = useState({}); // { [chatId]: { userId, username } }
 
+  const [isConnected, setIsConnected] = useState(false);
+
   useEffect(() => {
     if (!token || !user) {
       if (socket) {
         socket.disconnect();
         setSocket(null);
+        setIsConnected(false);
       }
       return;
     }
@@ -23,11 +26,16 @@ export const SocketProvider = ({ children }) => {
     const newSocket = io(API_BASE_URL, {
       auth: { token },
       transports: ['websocket', 'polling'],
-      reconnectionAttempts: 10,
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      timeout: 20000,
     });
 
     newSocket.on('connect', () => {
       console.log('⚡ Socket connected to AuraWave server');
+      setIsConnected(true);
     });
 
     newSocket.on('online-users', (users) => {
@@ -58,8 +66,9 @@ export const SocketProvider = ({ children }) => {
       });
     });
 
-    newSocket.on('disconnect', () => {
-      console.log('🔌 Socket disconnected');
+    newSocket.on('disconnect', (reason) => {
+      console.log('🔌 Socket disconnected, reason:', reason);
+      setIsConnected(false);
     });
 
     setSocket(newSocket);
@@ -68,6 +77,23 @@ export const SocketProvider = ({ children }) => {
       newSocket.disconnect();
     };
   }, [token, user?._id]);
+
+  // Immediately wake up & reconnect socket when tab becomes visible or network reconnects
+  useEffect(() => {
+    const handleWake = () => {
+      if (socket && !socket.connected) {
+        console.log('🔄 Tab became visible/online -> actively reconnecting socket');
+        socket.connect();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleWake);
+    window.addEventListener('online', handleWake);
+    return () => {
+      document.removeEventListener('visibilitychange', handleWake);
+      window.removeEventListener('online', handleWake);
+    };
+  }, [socket]);
 
   const isUserOnline = (userId) => {
     if (!userId) return false;
@@ -78,6 +104,7 @@ export const SocketProvider = ({ children }) => {
     <SocketContext.Provider
       value={{
         socket,
+        isConnected,
         onlineUsers,
         isUserOnline,
         typingMap,

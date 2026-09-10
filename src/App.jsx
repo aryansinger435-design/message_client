@@ -113,9 +113,6 @@ const MainLayout = () => {
         </div>
       </div>
 
-      {/* WebRTC Voice & Video Call Overlay (Active across any screen / tab) */}
-      <CallOverlay />
-
       {/* Profile Settings Modal when triggered from mobile bottom nav */}
       {profileOpen && (
         <ProfileModal
@@ -134,6 +131,8 @@ export default function App() {
       <SocketProvider>
         <CallProvider>
           <MainLayout />
+          {/* WebRTC Voice & Video Call Overlay (Mounted at root across entire app) */}
+          <CallOverlay />
         </CallProvider>
       </SocketProvider>
     </AuthProvider>

@@ -210,18 +210,33 @@ export const CallProvider = ({ children }) => {
 
     // 1. INCOMING CALL
     const handleIncomingCall = ({ signal, from, caller, callType: incomingType }) => {
-      console.log('📞 Incoming call from:', caller?.username, 'type:', incomingType);
+      console.log('📞 INCOMING CALL EVENT RECEIVED! From:', caller?.username || from, 'Type:', incomingType);
       const safeCaller = {
-        ...caller,
         _id: caller?._id || from,
+        username: caller?.username || 'User',
+        avatar: caller?.avatar || null,
       };
+
       setCallingUser(safeCaller);
       setCallType(incomingType || 'voice');
       setCallSignal(signal);
       setIsIncoming(true);
       setCallStatus('ringing');
       setCallActive(true);
-      startRingtone(false);
+
+      // Trigger mobile haptic vibration if supported
+      try {
+        if (typeof navigator !== 'undefined' && navigator.vibrate) {
+          navigator.vibrate([400, 200, 400, 200, 400]);
+        }
+      } catch (vibErr) {}
+
+      // Play ringtone safely
+      try {
+        startRingtone(false);
+      } catch (ringErr) {
+        console.warn('Ringtone playback error:', ringErr.message);
+      }
     };
 
     // 2. CALL ACCEPTED (Caller receives answer)
@@ -335,6 +350,12 @@ export const CallProvider = ({ children }) => {
     const targetUserId = getUserId(targetUser);
     if (!targetUserId) {
       console.error('Target user ID is missing');
+      return;
+    }
+
+    if (!socket || !socket.connected) {
+      alert('Network / Socket is currently disconnected. Reconnecting, please try again in a moment...');
+      socket?.connect?.();
       return;
     }
 

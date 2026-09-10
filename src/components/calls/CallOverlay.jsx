@@ -80,7 +80,7 @@ export const CallOverlay = () => {
   // 1. INCOMING CALL POPUP BANNER
   if (isIncoming && callStatus === 'ringing') {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
+      <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
         <div className="relative w-full max-w-sm bg-[#111b21] border border-[#222d34] rounded-3xl p-6 shadow-2xl text-center flex flex-col items-center">
           {/* Animated Avatar Ring */}
           <div className="relative mb-4">
@@ -147,7 +147,7 @@ export const CallOverlay = () => {
 
   // 2. ACTIVE CALL FULL-SCREEN OVERLAY
   return (
-    <div className="fixed inset-0 z-50 bg-[#0b141a] flex flex-col items-center justify-between p-3 sm:p-6 md:p-8 select-none">
+    <div className="fixed inset-0 z-[99999] bg-[#0b141a] flex flex-col items-center justify-between p-3 sm:p-6 md:p-8 select-none">
       {/* Top Header */}
       <div className="w-full flex items-center justify-between z-30">
         <div className="flex items-center gap-3">
