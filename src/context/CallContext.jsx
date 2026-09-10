@@ -11,7 +11,10 @@ const ICE_SERVERS = {
     { urls: 'stun:stun2.l.google.com:19302' },
     { urls: 'stun:stun3.l.google.com:19302' },
     { urls: 'stun:stun4.l.google.com:19302' },
+    { urls: 'stun:stun.services.mozilla.com' },
+    { urls: 'stun:global.stun.twilio.com:3478' },
   ],
+  iceCandidatePoolSize: 10,
 };
 
 // Synthesizes working WebRTC tracks (silent audio & animated canvas) for testing or restricted camera/mic environments
@@ -20,44 +23,58 @@ const createSynthesizedStream = (wantsVideo, type) => {
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
     let audioStream = null;
     if (AudioContextClass) {
-      const audioCtx = new AudioContextClass();
-      if (audioCtx.state === 'suspended') audioCtx.resume?.();
-      const dest = audioCtx.createMediaStreamDestination();
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      gain.gain.value = 0.0001; // extremely low gain so audio packets flow continuously
-      osc.connect(gain);
-      gain.connect(dest);
-      osc.start();
-      audioStream = dest.stream;
+      try {
+        const audioCtx = new AudioContextClass();
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume?.().catch(() => {});
+        }
+        const dest = audioCtx.createMediaStreamDestination();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        gain.gain.value = 0.0001; // extremely low gain so audio packets flow continuously
+        osc.connect(gain);
+        gain.connect(dest);
+        osc.start();
+        audioStream = dest.stream;
+      } catch (audioErr) {
+        console.warn('Synthesized audio context error:', audioErr);
+      }
     }
 
     const combined = audioStream ? audioStream : new MediaStream();
 
     if (wantsVideo) {
-      const canvas = document.createElement('canvas');
-      canvas.width = 320;
-      canvas.height = 240;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        let frame = 0;
-        const draw = () => {
-          ctx.fillStyle = '#111b21';
-          ctx.fillRect(0, 0, 320, 240);
-          ctx.fillStyle = '#00a884';
-          ctx.beginPath();
-          ctx.arc(160, 120, 24 + Math.sin(frame) * 6, 0, Math.PI * 2);
-          ctx.fill();
-          frame += 0.2;
-        };
-        draw();
-        const animInterval = setInterval(draw, 100);
-        const canvasStream = canvas.captureStream(15);
-        const videoTrack = canvasStream.getVideoTracks()[0];
-        if (videoTrack) {
-          videoTrack.onended = () => clearInterval(animInterval);
-          combined.addTrack(videoTrack);
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = 320;
+        canvas.height = 240;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          let frame = 0;
+          const draw = () => {
+            ctx.fillStyle = '#111b21';
+            ctx.fillRect(0, 0, 320, 240);
+            ctx.fillStyle = '#00a884';
+            ctx.beginPath();
+            ctx.arc(160, 120, 24 + Math.sin(frame) * 6, 0, Math.PI * 2);
+            ctx.fill();
+            frame += 0.2;
+          };
+          draw();
+          const animInterval = setInterval(draw, 100);
+
+          const getCapture = canvas.captureStream || canvas.mozCaptureStream || canvas.webkitCaptureStream;
+          if (getCapture) {
+            const canvasStream = getCapture.call(canvas, 15);
+            const videoTrack = canvasStream?.getVideoTracks?.()[0];
+            if (videoTrack) {
+              videoTrack.onended = () => clearInterval(animInterval);
+              combined.addTrack(videoTrack);
+            }
+          }
         }
+      } catch (canvasErr) {
+        console.warn('Synthesized canvas video error:', canvasErr);
       }
     }
 
@@ -83,7 +100,13 @@ const acquireMediaStream = async (type = 'voice') => {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: true,
-      video: wantsVideo ? { width: { ideal: 640 }, height: { ideal: 480 } } : false,
+      video: wantsVideo
+        ? {
+            width: { ideal: 640 },
+            height: { ideal: 480 },
+            facingMode: 'user',
+          }
+        : false,
     });
     return { stream, actualType: type };
   } catch (err1) {
@@ -304,6 +327,7 @@ export const CallProvider = ({ children }) => {
   };
 
   // ==========================================
+  // ==========================================
   // INITIATE CALL (Caller)
   // ==========================================
   const startCall = async (targetUser, requestedType = 'voice') => {
@@ -315,7 +339,11 @@ export const CallProvider = ({ children }) => {
     }
 
     try {
-      setCallingUser(targetUser);
+      const safeTarget = typeof targetUser === 'object' && targetUser !== null
+        ? targetUser
+        : { _id: targetUserId, username: 'Contact' };
+
+      setCallingUser(safeTarget);
       setCallType(requestedType);
       setIsIncoming(false);
       setCallStatus('calling');
@@ -337,9 +365,31 @@ export const CallProvider = ({ children }) => {
       peerConnectionRef.current = peer;
 
       // Add local tracks to peer
-      stream.getTracks().forEach((track) => {
-        peer.addTrack(track, stream);
-      });
+      if (stream) {
+        stream.getTracks().forEach((track) => {
+          peer.addTrack(track, stream);
+        });
+      }
+
+      // Ensure transceivers exist so SDP always includes audio and video sections
+      const senders = peer.getSenders();
+      const hasAudio = senders.some((s) => s.track && s.track.kind === 'audio');
+      if (!hasAudio) {
+        try {
+          peer.addTransceiver('audio', { direction: 'sendrecv' });
+        } catch (e) {
+          console.warn('Could not add audio transceiver:', e);
+        }
+      }
+
+      const hasVideo = senders.some((s) => s.track && s.track.kind === 'video');
+      if (requestedType === 'video' && !hasVideo) {
+        try {
+          peer.addTransceiver('video', { direction: 'sendrecv' });
+        } catch (e) {
+          console.warn('Could not add video transceiver:', e);
+        }
+      }
 
       // Handle ICE Candidates
       peer.onicecandidate = (event) => {
@@ -359,23 +409,19 @@ export const CallProvider = ({ children }) => {
         console.log('🧊 ICE State (Caller):', peer.iceConnectionState);
       };
 
-      // Handle Remote Tracks (preserving all incoming tracks)
+      // Handle Remote Tracks (preserving all incoming tracks with brand new MediaStream instance)
       peer.ontrack = (event) => {
         console.log('📡 Received remote track:', event.track.kind);
-        if (event.streams && event.streams[0]) {
-          setRemoteStream(event.streams[0]);
-        } else {
-          setRemoteStream((prev) => {
-            const existing = prev ? prev.getTracks().filter((t) => t.id !== event.track.id) : [];
-            return new MediaStream([...existing, event.track]);
-          });
-        }
+        const remoteMedia = (event.streams && event.streams[0])
+          ? event.streams[0]
+          : new MediaStream([event.track]);
+        setRemoteStream(new MediaStream(remoteMedia.getTracks()));
       };
 
       // Create Offer
       const offer = await peer.createOffer({
         offerToReceiveAudio: true,
-        offerToReceiveVideo: true,
+        offerToReceiveVideo: requestedType === 'video',
       });
       await peer.setLocalDescription(offer);
 
@@ -413,9 +459,31 @@ export const CallProvider = ({ children }) => {
       const peer = new RTCPeerConnection(ICE_SERVERS);
       peerConnectionRef.current = peer;
 
-      stream.getTracks().forEach((track) => {
-        peer.addTrack(track, stream);
-      });
+      if (stream) {
+        stream.getTracks().forEach((track) => {
+          peer.addTrack(track, stream);
+        });
+      }
+
+      // Ensure transceivers on answer side
+      const senders = peer.getSenders();
+      const hasAudio = senders.some((s) => s.track && s.track.kind === 'audio');
+      if (!hasAudio) {
+        try {
+          peer.addTransceiver('audio', { direction: 'sendrecv' });
+        } catch (e) {
+          console.warn('Could not add audio transceiver:', e);
+        }
+      }
+
+      const hasVideo = senders.some((s) => s.track && s.track.kind === 'video');
+      if (callType === 'video' && !hasVideo) {
+        try {
+          peer.addTransceiver('video', { direction: 'sendrecv' });
+        } catch (e) {
+          console.warn('Could not add video transceiver:', e);
+        }
+      }
 
       peer.onicecandidate = (event) => {
         if (event.candidate && socket) {
@@ -436,14 +504,10 @@ export const CallProvider = ({ children }) => {
 
       peer.ontrack = (event) => {
         console.log('📡 Remote track received on answer:', event.track.kind);
-        if (event.streams && event.streams[0]) {
-          setRemoteStream(event.streams[0]);
-        } else {
-          setRemoteStream((prev) => {
-            const existing = prev ? prev.getTracks().filter((t) => t.id !== event.track.id) : [];
-            return new MediaStream([...existing, event.track]);
-          });
-        }
+        const remoteMedia = (event.streams && event.streams[0])
+          ? event.streams[0]
+          : new MediaStream([event.track]);
+        setRemoteStream(new MediaStream(remoteMedia.getTracks()));
       };
 
       // Set Remote Description (Caller's Offer)
@@ -455,7 +519,7 @@ export const CallProvider = ({ children }) => {
         try {
           await peer.addIceCandidate(new RTCIceCandidate(candidate));
         } catch (candErr) {
-          console.warn('ICE candidate add error on answer:', candErr);
+          console.warn('ICE candidate add error on answer:', candErr.message);
         }
       }
 

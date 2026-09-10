@@ -124,7 +124,12 @@ export const CallOverlay = () => {
             </button>
 
             <button
-              onClick={answerCall}
+              onClick={() => {
+                if (remoteAudioRef.current) {
+                  remoteAudioRef.current.play?.().catch(() => {});
+                }
+                answerCall();
+              }}
               className="w-14 h-14 rounded-full bg-[#25d366] hover:bg-[#20bd5a] text-[#111b21] flex items-center justify-center shadow-lg shadow-[#25d366]/30 transition transform hover:scale-110 cursor-pointer animate-bounce"
               title="Accept"
             >
@@ -186,6 +191,7 @@ export const CallOverlay = () => {
               ref={remoteVideoRef}
               autoPlay
               playsInline
+              muted
               className="w-full h-full object-cover"
             />
 
@@ -251,7 +257,20 @@ export const CallOverlay = () => {
       </div>
 
       {/* Permanent Remote Audio playback */}
-      <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
+      <audio
+        ref={remoteAudioRef}
+        autoPlay
+        playsInline
+        style={{
+          position: 'fixed',
+          top: -1000,
+          left: -1000,
+          width: '1px',
+          height: '1px',
+          opacity: 0,
+          pointerEvents: 'none',
+        }}
+      />
 
       {/* Browser Autoplay safety banner */}
       {audioBlocked && (

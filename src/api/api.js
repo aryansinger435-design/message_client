@@ -39,11 +39,17 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      console.warn('Session expired or unauthorized - clearing stale token');
-      localStorage.removeItem('aurawave_token');
-      localStorage.removeItem('aurawave_user');
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('aurawave-unauthorized'));
+      const authHeader = error.config?.headers?.Authorization;
+      const msg = error.response?.data?.message?.toLowerCase() || '';
+      
+      // Only wipe session if the request actually provided a token and server rejected it as expired or invalid
+      if (authHeader && (msg.includes('expired') || msg.includes('invalid') || msg.includes('user not found'))) {
+        console.warn('Session expired or unauthorized - clearing stale token');
+        localStorage.removeItem('aurawave_token');
+        localStorage.removeItem('aurawave_user');
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('aurawave-unauthorized'));
+        }
       }
     }
     return Promise.reject(error);
