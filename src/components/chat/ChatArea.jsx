@@ -22,6 +22,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useSocket } from '../../context/SocketContext';
 import { useCall } from '../../context/CallContext';
 import { ChatInput } from './ChatInput';
+import { AuraWaveLogo } from '../common/AuraWaveLogo';
 
 export const ChatArea = ({ activeChat, onBack }) => {
   const { user } = useAuth();
@@ -68,10 +69,23 @@ export const ChatArea = ({ activeChat, onBack }) => {
       try {
         const res = await api.get(`/messages/${activeChat._id}`);
         if (res.data?.success) {
-          setMessages(res.data.data.messages || []);
+          const raw = res.data.data.messages || [];
+          const seen = new Set();
+          const unique = [];
+          for (const m of raw) {
+            if (!m || !m._id) continue;
+            if (seen.has(m._id)) continue;
+            seen.add(m._id);
+            unique.push(m);
+          }
+          setMessages(unique);
           api.put(`/messages/chat/${activeChat._id}/read-all`).catch(() => {});
         }
       } catch (err) {
+        if (err.response?.status === 401) {
+          clearInterval(pollInterval);
+          return;
+        }
         console.error('Error fetching messages:', err);
       }
     };
@@ -93,14 +107,24 @@ export const ChatArea = ({ activeChat, onBack }) => {
     socket.emit('join-chat', activeChat._id);
 
     const handleNewMessage = (newMsg) => {
-      if (newMsg.chatId === activeChat._id) {
+      const msgChatId = typeof newMsg.chatId === 'object' ? newMsg.chatId?._id : newMsg.chatId;
+      if (String(msgChatId) === String(activeChat._id)) {
         setMessages((prev) => {
-          if (prev.some((m) => m._id === newMsg._id)) return prev;
+          if (
+            prev.some(
+              (m) =>
+                m._id === newMsg._id ||
+                (m.clientTempId && newMsg.clientTempId && m.clientTempId === newMsg.clientTempId)
+            )
+          ) {
+            return prev;
+          }
           return [...prev, newMsg];
         });
 
         // Mark as read immediately if window is open
-        if (newMsg.sender._id !== user._id) {
+        const senderId = typeof newMsg.sender === 'object' ? (newMsg.sender?._id || newMsg.sender?.id) : newMsg.sender;
+        if (String(senderId) !== String(user?._id)) {
           socket.emit('mark-read', { messageId: newMsg._id, chatId: activeChat._id });
         }
       }
@@ -241,12 +265,12 @@ export const ChatArea = ({ activeChat, onBack }) => {
 
   if (!activeChat) {
     return (
-      <div className="flex-1 hidden md:flex flex-col items-center justify-center bg-[#111b21] border-b-8 border-[#00a884] p-8 text-center select-none">
-        <div className="w-20 h-20 rounded-3xl bg-[#202c33] border border-[#2a3942] flex items-center justify-center text-[#00a884] shadow-2xl mb-4">
-          <Phone className="w-10 h-10 stroke-[1.5]" />
-        </div>
-        <h2 className="text-xl font-bold text-white mb-2">AuraWave for Web</h2>
-        <p className="text-sm text-[#8696a0] max-w-md">
+      <div className="flex-1 hidden md:flex flex-col items-center justify-center bg-[#111b21] border-b-8 border-[#00a884] p-8 2xl:p-12 text-center select-none">
+        <AuraWaveLogo size={88} className="mb-5 2xl:scale-125 3xl:scale-150 transition" withGlow={true} />
+        <h2 className="text-2xl 2xl:text-3xl 3xl:text-4xl font-extrabold text-white mb-2 tracking-wide">
+          Aura<span className="text-[#00a884]">Wave</span> for Web
+        </h2>
+        <p className="text-sm 2xl:text-base 3xl:text-lg text-[#8696a0] max-w-md 2xl:max-w-lg 3xl:max-w-xl leading-relaxed">
           Send and receive messages, make crystal-clear voice and video calls, and share stories with end-to-end reliability.
         </p>
       </div>
@@ -254,20 +278,21 @@ export const ChatArea = ({ activeChat, onBack }) => {
   }
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-[#0b141a] overflow-hidden relative">
+    <div className="flex-1 min-w-0 flex flex-col h-full w-full bg-[#0b141a] overflow-hidden relative">
       {/* 1. CHAT HEADER */}
-      <div className="h-16 px-4 bg-[#202c33] border-b border-[#222d34] flex items-center justify-between z-20 shadow-md">
-        <div className="flex items-center gap-3">
+      <div className="h-14 sm:h-16 2xl:h-20 3xl:h-24 px-2.5 sm:px-4 2xl:px-6 3xl:px-8 bg-[#202c33] border-b border-[#222d34] flex items-center justify-between z-20 shadow-md shrink-0">
+        <div className="flex items-center gap-2 sm:gap-3 2xl:gap-4 min-w-0 flex-1">
           {/* Mobile Back Button */}
           <button
             onClick={onBack}
-            className="md:hidden p-1.5 -ml-1 text-[#8696a0] hover:text-white rounded-full transition"
+            className="md:hidden p-2 -ml-1 text-[#8696a0] hover:text-white active:scale-95 rounded-full transition active:bg-[#111b21] cursor-pointer min-w-[40px] min-h-[40px] flex items-center justify-center shrink-0"
+            title="Back to chats"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-5 h-5 stroke-[2.5]" />
           </button>
 
           {/* Avatar */}
-          <div className="relative w-10 h-10 rounded-full bg-[#111b21] border border-[#2a3942] flex items-center justify-center overflow-hidden">
+          <div className="relative w-9 h-9 sm:w-10 sm:h-10 2xl:w-12 2xl:h-12 3xl:w-14 3xl:h-14 rounded-full bg-[#111b21] border border-[#2a3942] flex items-center justify-center overflow-hidden shrink-0">
             {partner?.avatar ? (
               <img
                 src={getFullMediaUrl(partner.avatar)}
@@ -275,21 +300,21 @@ export const ChatArea = ({ activeChat, onBack }) => {
                 className="w-full h-full object-cover"
               />
             ) : (
-              <span className="font-bold text-sm text-[#00a884]">
+              <span className="font-bold text-sm 2xl:text-base 3xl:text-lg text-[#00a884]">
                 {(isGroup ? activeChat.name : partner?.username)?.[0]?.toUpperCase() || 'C'}
               </span>
             )}
             {isPartnerOnline && (
-              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-[#25d366] rounded-full ring-2 ring-[#202c33]" />
+              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 2xl:w-3 2xl:h-3 bg-[#25d366] rounded-full ring-2 ring-[#202c33]" />
             )}
           </div>
 
           {/* Details */}
-          <div>
-            <h3 className="text-sm font-bold text-white leading-tight">
+          <div className="min-w-0 flex-1">
+            <h3 className="text-sm sm:text-base 2xl:text-lg 3xl:text-xl font-bold text-white leading-tight truncate">
               {isGroup ? activeChat.name : partner?.username}
             </h3>
-            <p className="text-xs text-[#8696a0]">
+            <p className="text-[11px] sm:text-xs 2xl:text-sm 3xl:text-base text-[#8696a0] truncate mt-0.5">
               {isPartnerTyping ? (
                 <span className="text-[#25d366] font-medium animate-pulse">typing...</span>
               ) : isPartnerOnline ? (
@@ -304,23 +329,23 @@ export const ChatArea = ({ activeChat, onBack }) => {
         </div>
 
         {/* Action Buttons: Voice Call, Video Call, Menu */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5 sm:gap-1 2xl:gap-2 shrink-0">
           {!isGroup && partner && (
             <>
               <button
                 onClick={() => startCall(partner, 'voice')}
-                className="p-2.5 rounded-full text-[#8696a0] hover:text-[#00a884] hover:bg-[#111b21] transition cursor-pointer"
+                className="p-1.5 sm:p-2.5 2xl:p-3.5 3xl:p-4 rounded-full text-[#8696a0] hover:text-[#00a884] hover:bg-[#111b21] transition active:scale-95 cursor-pointer"
                 title="Voice Call"
               >
-                <Phone className="w-5 h-5" />
+                <Phone className="w-4 h-4 sm:w-5 sm:h-5 2xl:w-6 2xl:h-6 3xl:w-7 3xl:h-7" />
               </button>
 
               <button
                 onClick={() => startCall(partner, 'video')}
-                className="p-2.5 rounded-full text-[#8696a0] hover:text-[#00a884] hover:bg-[#111b21] transition cursor-pointer"
+                className="p-1.5 sm:p-2.5 2xl:p-3.5 3xl:p-4 rounded-full text-[#8696a0] hover:text-[#00a884] hover:bg-[#111b21] transition active:scale-95 cursor-pointer"
                 title="Video Call"
               >
-                <Video className="w-5 h-5" />
+                <Video className="w-4 h-4 sm:w-5 sm:h-5 2xl:w-6 2xl:h-6 3xl:w-7 3xl:h-7" />
               </button>
             </>
           )}
@@ -329,14 +354,14 @@ export const ChatArea = ({ activeChat, onBack }) => {
           <div className="relative">
             <button
               onClick={() => setShowWallpaperMenu(!showWallpaperMenu)}
-              className="p-2.5 rounded-full text-[#8696a0] hover:text-[#00a884] hover:bg-[#111b21] transition cursor-pointer"
+              className="p-1.5 sm:p-2.5 2xl:p-3.5 3xl:p-4 rounded-full text-[#8696a0] hover:text-[#00a884] hover:bg-[#111b21] transition active:scale-95 cursor-pointer"
               title="Change Wallpaper & Background"
             >
-              <Palette className="w-5 h-5" />
+              <Palette className="w-4 h-4 sm:w-5 sm:h-5 2xl:w-6 2xl:h-6 3xl:w-7 3xl:h-7" />
             </button>
 
             {showWallpaperMenu && (
-              <div className="absolute right-0 top-12 w-48 bg-[#111b21] border border-[#222d34] rounded-2xl shadow-2xl p-2 z-40 animate-fadeIn">
+              <div className="absolute right-0 top-12 w-48 max-w-[calc(100vw-1.5rem)] bg-[#111b21] border border-[#222d34] rounded-2xl shadow-2xl p-2 z-40 animate-fadeIn">
                 <p className="text-[10px] font-bold uppercase tracking-wider text-[#8696a0] px-3 py-1.5">
                   Chat Background
                 </p>
@@ -377,51 +402,53 @@ export const ChatArea = ({ activeChat, onBack }) => {
             )}
           </div>
 
-          <button className="p-2.5 rounded-full text-[#8696a0] hover:text-white hover:bg-[#111b21] transition">
-            <MoreVertical className="w-5 h-5" />
+          <button className="p-1.5 sm:p-2.5 rounded-full text-[#8696a0] hover:text-white hover:bg-[#111b21] transition active:scale-95 cursor-pointer">
+            <MoreVertical className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
         </div>
       </div>
 
       {/* 2. MESSAGES SCROLL AREA */}
-      <div className={`flex-1 overflow-y-auto wallpaper-${wallpaper} px-4 sm:px-12 py-6 space-y-3`}>
-        {loading ? (
-          <div className="flex items-center justify-center h-full text-xs text-[#8696a0]">
-            Loading messages...
-          </div>
-        ) : messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center">
-            <div className="p-3 bg-[#111b21] border border-[#222d34] rounded-2xl shadow mb-2 text-[#00a884]">
-              🔒
+      <div className={`flex-1 overflow-y-auto wallpaper-${wallpaper} px-2 sm:px-6 md:px-8 lg:px-10 py-3 sm:py-6 touch-scroll`}>
+        <div className="reading-corridor space-y-2.5 sm:space-y-3.5 2xl:space-y-4 3xl:space-y-5">
+          {loading ? (
+            <div className="flex items-center justify-center py-20 text-xs 2xl:text-sm text-[#8696a0]">
+              Loading messages...
             </div>
-            <p className="text-xs text-[#8696a0] max-w-xs">
-              Messages and calls are end-to-end encrypted. No one outside of this chat can read or listen to them.
-            </p>
-          </div>
-        ) : (
-          messages.map((msg) => {
-            const isMe = msg.sender?._id === user?._id || msg.sender === user?._id;
-            const isRead =
-              msg.readBy &&
-              msg.readBy.some(
-                (id) => (typeof id === 'object' ? id._id : id) !== user?._id
-              );
+          ) : messages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <div className="p-3 2xl:p-4 bg-[#111b21] border border-[#222d34] rounded-2xl shadow mb-2 text-[#00a884]">
+                🔒
+              </div>
+              <p className="text-xs 2xl:text-sm text-[#8696a0] max-w-xs 2xl:max-w-md">
+                Messages and calls are end-to-end encrypted. No one outside of this chat can read or listen to them.
+              </p>
+            </div>
+          ) : (
+            messages.map((msg) => {
+              const isMe = msg.sender?._id === user?._id || msg.sender === user?._id;
+              const isRead =
+                msg.readBy &&
+                msg.readBy.some(
+                  (id) => (typeof id === 'object' ? id._id : id) !== user?._id
+                );
 
-            return (
-              <div
-                key={msg._id}
-                onMouseEnter={() => setHoveredMsgId(msg._id)}
-                onMouseLeave={() => setHoveredMsgId(null)}
-                className={`relative flex flex-col ${isMe ? 'items-end' : 'items-start'} group`}
-              >
-                {/* Bubble Container */}
+              return (
                 <div
-                  className={`relative max-w-[85%] sm:max-w-md rounded-2xl p-2.5 shadow-md ${
-                    isMe
-                      ? 'bubble-outgoing text-white rounded-tr-xs'
-                      : 'bubble-incoming text-[#e9edef] rounded-tl-xs'
-                  } ${msg.isDeletedForEveryone ? 'italic opacity-70' : ''}`}
+                  key={msg._id}
+                  onMouseEnter={() => setHoveredMsgId(msg._id)}
+                  onMouseLeave={() => setHoveredMsgId(null)}
+                  onClick={() => setHoveredMsgId((prev) => (prev === msg._id ? null : msg._id))}
+                  className={`relative flex flex-col ${isMe ? 'items-end' : 'items-start'} group`}
                 >
+                  {/* Bubble Container */}
+                  <div
+                    className={`relative max-w-[85%] sm:max-w-[75%] md:max-w-md lg:max-w-lg xl:max-w-xl 2xl:max-w-2xl 3xl:max-w-3xl 4xl:max-w-4xl rounded-2xl 2xl:rounded-3xl p-2.5 2xl:p-4 3xl:p-5 shadow-md ${
+                      isMe
+                        ? 'bubble-outgoing text-white rounded-tr-xs'
+                        : 'bubble-incoming text-[#e9edef] rounded-tl-xs'
+                    } ${msg.isDeletedForEveryone ? 'italic opacity-70' : ''}`}
+                  >
                   {/* Quoted Message Preview */}
                   {msg.replyTo && (
                     <div
@@ -444,12 +471,12 @@ export const ChatArea = ({ activeChat, onBack }) => {
                   {msg.messageType === 'image' && msg.fileUrl && (
                     <div
                       onClick={() => setPreviewMedia({ type: 'image', url: msg.fileUrl })}
-                      className="mb-1.5 rounded-xl overflow-hidden cursor-pointer bg-black/20"
+                      className="mb-1.5 rounded-xl 2xl:rounded-2xl overflow-hidden cursor-pointer bg-black/20"
                     >
                       <img
                         src={getFullMediaUrl(msg.fileUrl)}
                         alt="attachment"
-                        className="w-full max-h-72 object-cover rounded-xl hover:scale-102 transition duration-200"
+                        className="w-full max-h-72 sm:max-h-80 2xl:max-h-96 3xl:max-h-[520px] 4xl:max-h-[640px] object-cover rounded-xl 2xl:rounded-2xl hover:scale-102 transition duration-200"
                         loading="lazy"
                       />
                     </div>
@@ -457,38 +484,38 @@ export const ChatArea = ({ activeChat, onBack }) => {
 
                   {/* 🎥 VIDEO ATTACHMENT */}
                   {msg.messageType === 'video' && msg.fileUrl && (
-                    <div className="mb-1.5 rounded-xl overflow-hidden bg-black/40">
+                    <div className="mb-1.5 rounded-xl 2xl:rounded-2xl overflow-hidden bg-black/40">
                       <video
                         src={getFullMediaUrl(msg.fileUrl)}
                         controls
-                        className="w-full max-h-72 rounded-xl"
+                        className="w-full max-h-72 sm:max-h-80 2xl:max-h-96 3xl:max-h-[520px] 4xl:max-h-[640px] rounded-xl 2xl:rounded-2xl"
                       />
                     </div>
                   )}
 
                   {/* 🎤 VOICE MESSAGE PLAYER */}
                   {msg.messageType === 'voice' && (msg.voiceMessage || msg.fileUrl) && (
-                    <div className="flex items-center gap-3 p-1 min-w-[200px]">
+                    <div className="flex items-center gap-3 p-1 min-w-[200px] 2xl:min-w-[240px]">
                       <button
                         onClick={() =>
                           togglePlayAudio(msg._id, msg.voiceMessage || msg.fileUrl)
                         }
-                        className="w-10 h-10 rounded-full bg-[#00a884] text-[#111b21] flex items-center justify-center shadow hover:scale-105 transition"
+                        className="w-10 h-10 2xl:w-12 2xl:h-12 3xl:w-14 3xl:h-14 rounded-full bg-[#00a884] text-[#111b21] flex items-center justify-center shadow hover:scale-105 transition shrink-0"
                       >
                         {playingAudioId === msg._id ? (
-                          <Pause className="w-5 h-5 fill-current" />
+                          <Pause className="w-5 h-5 2xl:w-6 2xl:h-6 fill-current" />
                         ) : (
-                          <Play className="w-5 h-5 fill-current ml-0.5" />
+                          <Play className="w-5 h-5 2xl:w-6 2xl:h-6 fill-current ml-0.5" />
                         )}
                       </button>
 
                       <div className="flex-1 flex flex-col justify-center gap-1">
-                        <div className="flex items-center gap-1 h-5">
+                        <div className="flex items-center gap-1 h-5 2xl:h-6">
                           {[40, 70, 20, 90, 50, 80, 30, 60, 100, 45, 75, 30].map(
                             (height, idx) => (
                               <span
                                 key={idx}
-                                className={`w-1 rounded-full transition-all ${
+                                className={`w-1 2xl:w-1.5 rounded-full transition-all ${
                                   playingAudioId === msg._id
                                     ? 'bg-[#25d366]'
                                     : 'bg-white/40'
@@ -498,7 +525,7 @@ export const ChatArea = ({ activeChat, onBack }) => {
                             )
                           )}
                         </div>
-                        <span className="text-[10px] opacity-75 font-mono">
+                        <span className="text-[10px] 2xl:text-xs opacity-75 font-mono">
                           {msg.voiceDuration ? `${msg.voiceDuration}s` : 'Voice Note'}
                         </span>
                       </div>
@@ -512,41 +539,41 @@ export const ChatArea = ({ activeChat, onBack }) => {
                       download
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-3 p-2.5 rounded-xl bg-black/20 hover:bg-black/30 transition mb-1"
+                      className="flex items-center gap-3 p-2.5 rounded-xl 2xl:rounded-2xl bg-black/20 hover:bg-black/30 transition mb-1"
                     >
                       <div className="p-2 rounded-lg bg-indigo-500/20 text-indigo-400">
-                        <FileText className="w-5 h-5" />
+                        <FileText className="w-5 h-5 2xl:w-6 2xl:h-6" />
                       </div>
                       <div className="overflow-hidden flex-1">
-                        <p className="text-xs font-semibold truncate">
+                        <p className="text-xs 2xl:text-sm font-semibold truncate">
                           {msg.fileName || 'Document'}
                         </p>
-                        <p className="text-[10px] opacity-70">
+                        <p className="text-[10px] 2xl:text-xs opacity-70">
                           {msg.fileSize
                             ? `${(msg.fileSize / 1024).toFixed(1)} KB`
                             : 'Download'}
                         </p>
                       </div>
-                      <Download className="w-4 h-4 opacity-75 hover:opacity-100" />
+                      <Download className="w-4 h-4 2xl:w-5 2xl:h-5 opacity-75 hover:opacity-100" />
                     </a>
                   )}
 
                   {/* Text Message Content */}
                   {msg.content && msg.messageType !== 'voice' && (
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
+                    <p className="text-sm 2xl:text-base 3xl:text-lg leading-relaxed whitespace-pre-wrap break-words">
                       {msg.content}
                     </p>
                   )}
 
                   {/* Message Meta: Time & WhatsApp Checkmarks */}
-                  <div className="flex items-center justify-end gap-1 mt-1 text-[10px] opacity-75 select-none">
+                  <div className="flex items-center justify-end gap-1 mt-1 text-[10px] 2xl:text-xs 3xl:text-sm opacity-75 select-none">
                     <span>{formatTime(msg.createdAt)}</span>
                     {isMe && !msg.isDeletedForEveryone && (
                       <span>
                         {isRead ? (
-                          <CheckCheck className="w-3.5 h-3.5 text-[#53bdeb]" />
+                          <CheckCheck className="w-3.5 h-3.5 2xl:w-4 2xl:h-4 text-[#53bdeb]" />
                         ) : (
-                          <CheckCheck className="w-3.5 h-3.5 text-white/60" />
+                          <CheckCheck className="w-3.5 h-3.5 2xl:w-4 2xl:h-4 text-white/60" />
                         )}
                       </span>
                     )}
@@ -564,12 +591,12 @@ export const ChatArea = ({ activeChat, onBack }) => {
                   )}
                 </div>
 
-                {/* Hover Quick Action Toolbar */}
+                {/* Quick Action Toolbar */}
                 {hoveredMsgId === msg._id && !msg.isDeletedForEveryone && (
                   <div
-                    className={`absolute -top-7 ${
+                    className={`absolute -top-8 ${
                       isMe ? 'right-0' : 'left-0'
-                    } flex items-center gap-1 bg-[#111b21] border border-[#222d34] rounded-xl px-2 py-1 shadow-xl z-20 animate-fadeIn`}
+                    } max-w-[calc(100vw-2rem)] flex items-center gap-1 bg-[#111b21] border border-[#222d34] rounded-xl px-2 py-1 shadow-xl z-20 animate-fadeIn select-none`}
                   >
                     {/* Quick Reactions */}
                     {['❤️', '😂', '👍', '🔥'].map((em) => (
@@ -609,7 +636,8 @@ export const ChatArea = ({ activeChat, onBack }) => {
             );
           })
         )}
-        <div ref={messagesEndRef} />
+          <div ref={messagesEndRef} />
+        </div>
       </div>
 
       {/* 3. CHAT INPUT BAR */}
@@ -618,7 +646,18 @@ export const ChatArea = ({ activeChat, onBack }) => {
         replyMessage={replyMessage}
         onCancelReply={() => setReplyMessage(null)}
         onMessageSent={(newMsg) => {
-          setMessages((prev) => (prev.some((m) => m._id === newMsg._id) ? prev : [...prev, newMsg]));
+          setMessages((prev) => {
+            if (
+              prev.some(
+                (m) =>
+                  m._id === newMsg._id ||
+                  (m.clientTempId && newMsg.clientTempId && m.clientTempId === newMsg.clientTempId)
+              )
+            ) {
+              return prev;
+            }
+            return [...prev, newMsg];
+          });
         }}
       />
 

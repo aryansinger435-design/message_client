@@ -40,12 +40,24 @@ export const AuthProvider = ({ children }) => {
           }
         } catch (err) {
           console.warn('Initial session check failed:', err.message);
-          // Don't log out immediately on network glitch
+          if (err.response?.status === 401) {
+            setUser(null);
+            setToken(null);
+            localStorage.removeItem('aurawave_token');
+            localStorage.removeItem('aurawave_user');
+          }
         }
       }
       setLoading(false);
     };
     checkAuth();
+
+    const handleUnauthorized = () => {
+      setUser(null);
+      setToken(null);
+    };
+    window.addEventListener('aurawave-unauthorized', handleUnauthorized);
+    return () => window.removeEventListener('aurawave-unauthorized', handleUnauthorized);
   }, []);
 
   const login = async (email, password) => {

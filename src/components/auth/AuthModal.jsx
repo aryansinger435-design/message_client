@@ -11,6 +11,7 @@ import {
   CheckCircle2,
   KeyRound,
 } from 'lucide-react';
+import { AuraWaveLogo } from '../common/AuraWaveLogo';
 
 export const AuthModal = () => {
   const { login, register, verifyOTP, resendOTP, forgotPassword, resetPassword } = useAuth();
@@ -180,23 +181,23 @@ export const AuthModal = () => {
       {/* Background ambient lighting */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-tr from-[#00a884]/25 to-[#25d366]/15 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="relative w-full max-w-md bg-[#111b21] border border-[#222d34] rounded-3xl shadow-2xl p-8 sm:p-9 overflow-hidden">
+      <div className="relative w-full max-w-md 2xl:max-w-lg 3xl:max-w-xl 4xl:max-w-2xl bg-[#111b21] border border-[#222d34] rounded-3xl shadow-2xl p-5 sm:p-8 2xl:p-10 max-h-[92dvh] overflow-y-auto touch-scroll">
         {/* Top Accent Line */}
         <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-[#00a884] via-[#25d366] to-[#00a884]" />
 
         {/* Brand Header */}
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#00a884] to-[#25d366] text-[#111b21] shadow-lg shadow-[#00a884]/30 mb-3">
-            {mode === 'forgot-password' || mode === 'reset-password' ? (
-              <KeyRound className="w-7 h-7 stroke-[2.5]" />
-            ) : (
-              <Sparkles className="w-7 h-7 stroke-[2.5]" />
-            )}
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white flex items-center justify-center gap-1.5">
+        <div className="text-center mb-6 2xl:mb-8">
+          {mode === 'forgot-password' || mode === 'reset-password' ? (
+            <div className="inline-flex items-center justify-center w-14 h-14 2xl:w-16 2xl:h-16 rounded-2xl bg-gradient-to-tr from-[#00a884] to-[#25d366] text-[#111b21] shadow-lg shadow-[#00a884]/30 mb-3">
+              <KeyRound className="w-7 h-7 2xl:w-8 2xl:h-8 stroke-[2.5]" />
+            </div>
+          ) : (
+            <AuraWaveLogo size={58} className="mb-3 2xl:scale-110" withGlow={true} />
+          )}
+          <h1 className="text-2xl sm:text-3xl 2xl:text-4xl 3xl:text-5xl font-extrabold tracking-tight text-white flex items-center justify-center gap-1.5">
             Aura<span className="text-[#00a884]">Wave</span>
           </h1>
-          <p className="text-xs sm:text-sm text-[#8696a0] mt-1">
+          <p className="text-xs sm:text-sm 2xl:text-base text-[#8696a0] mt-1 2xl:mt-2">
             {mode === 'login' && 'Sign in to access your conversations & calls.'}
             {mode === 'register' && 'Create your account to connect with friends.'}
             {mode === 'otp' && 'Verify your email address to continue.'}

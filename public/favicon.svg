@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="aurawave-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00a884" />
+      <stop offset="50%" stop-color="#128c7e" />
+      <stop offset="100%" stop-color="#0b3832" />
+    </linearGradient>
+
+    <!-- Wave Glow Gradient -->
+    <linearGradient id="aurawave-glow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#25d366" />
+      <stop offset="50%" stop-color="#00e5ff" />
+      <stop offset="100%" stop-color="#25d366" />
+    </linearGradient>
+
+    <!-- Drop Shadow Filter -->
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#00a884" flood-opacity="0.38"/>
+    </filter>
+  </defs>
+
+  <!-- Squircle Base with Soft Shadow -->
+  <rect x="32" y="32" width="448" height="448" rx="112" fill="url(#aurawave-bg)" filter="url(#shadow)" />
+
+  <!-- Glossy Highlight Border -->
+  <rect x="34" y="34" width="444" height="444" rx="110" fill="none" stroke="#ffffff" stroke-width="4" stroke-opacity="0.2" />
+
+  <!-- Modern Chat Bubble Silhouette -->
+  <path d="M142 165 C142 135 166 110 196 110 L316 110 C346 110 370 135 370 165 L370 265 C370 295 346 320 316 320 L220 320 L160 372 C150 380 142 374 142 360 Z" fill="#0c1317" fill-opacity="0.35" stroke="#ffffff" stroke-width="12" stroke-linejoin="round" stroke-linecap="round"/>
+
+  <!-- Dynamic Aura Wave Bars (Sound & Chat Waves) -->
+  <!-- Outer Left -->
+  <rect x="180" y="196" width="18" height="38" rx="9" fill="url(#aurawave-glow)" fill-opacity="0.85" />
+
+  <!-- Mid Left -->
+  <rect x="214" y="174" width="18" height="82" rx="9" fill="url(#aurawave-glow)" />
+
+  <!-- Center Peak -->
+  <rect x="247" y="152" width="18" height="126" rx="9" fill="#ffffff" />
+
+  <!-- Mid Right -->
+  <rect x="280" y="174" width="18" height="82" rx="9" fill="url(#aurawave-glow)" />
+
+  <!-- Outer Right -->
+  <rect x="314" y="196" width="18" height="38" rx="9" fill="url(#aurawave-glow)" fill-opacity="0.85" />
+
+  <!-- Glowing Accent Aura Pulse on Top-Right -->
+  <circle cx="395" cy="115" r="16" fill="#25d366" />
+  <circle cx="395" cy="115" r="28" fill="#25d366" fill-opacity="0.25" />
+</svg>

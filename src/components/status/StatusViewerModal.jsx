@@ -73,13 +73,13 @@ export const StatusViewerModal = ({ userGroup, onClose, isMine = false, onDelete
       onTouchStart={() => setIsPaused(true)}
       onTouchEnd={() => setIsPaused(false)}
     >
-      <div className="relative w-full max-w-lg h-full sm:h-[90vh] sm:rounded-3xl overflow-hidden flex flex-col bg-[#0b141a] shadow-2xl border border-[#222d34]">
+      <div className="relative w-full max-w-lg 2xl:max-w-xl 3xl:max-w-2xl 4xl:max-w-3xl h-full sm:h-[90vh] 3xl:h-[82vh] 4xl:h-[78vh] sm:rounded-3xl overflow-hidden flex flex-col bg-[#0b141a] shadow-2xl border border-[#222d34]">
         {/* Top Progress Bars */}
-        <div className="absolute top-3 left-3 right-3 z-30 flex items-center gap-1.5">
+        <div className="absolute top-3 left-3 right-3 z-30 flex items-center gap-1.5 2xl:gap-2">
           {statuses.map((s, idx) => (
             <div
               key={s._id || idx}
-              className="flex-1 h-1 bg-white/25 rounded-full overflow-hidden"
+              className="flex-1 h-1 2xl:h-1.5 bg-white/25 rounded-full overflow-hidden"
             >
               <div
                 className="h-full bg-white transition-all duration-75 ease-linear rounded-full"
@@ -98,8 +98,8 @@ export const StatusViewerModal = ({ userGroup, onClose, isMine = false, onDelete
 
         {/* Top Author Bar */}
         <div className="absolute top-6 left-4 right-4 z-30 flex items-center justify-between text-white drop-shadow-md">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#202c33] border border-white/20 overflow-hidden flex items-center justify-center">
+          <div className="flex items-center gap-3 2xl:gap-4">
+            <div className="w-10 h-10 2xl:w-13 2xl:h-13 rounded-full bg-[#202c33] border border-white/20 overflow-hidden flex items-center justify-center">
               {author?.avatar ? (
                 <img
                   src={getFullMediaUrl(author.avatar)}
@@ -107,14 +107,14 @@ export const StatusViewerModal = ({ userGroup, onClose, isMine = false, onDelete
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <span className="font-bold text-[#00a884]">
+                <span className="font-bold text-[#00a884] 2xl:text-lg">
                   {author?.username?.[0]?.toUpperCase()}
                 </span>
               )}
             </div>
             <div>
-              <p className="text-sm font-bold leading-tight">{author?.username}</p>
-              <p className="text-[11px] opacity-75">
+              <p className="text-sm 2xl:text-base font-bold leading-tight">{author?.username}</p>
+              <p className="text-[11px] 2xl:text-xs opacity-75">
                 {new Date(activeStatus.createdAt).toLocaleTimeString([], {
                   hour: '2-digit',
                   minute: '2-digit',
@@ -131,17 +131,17 @@ export const StatusViewerModal = ({ userGroup, onClose, isMine = false, onDelete
                   onDeleteStatus(activeStatus._id);
                   onClose();
                 }}
-                className="p-2 text-white/80 hover:text-red-400 rounded-full transition"
+                className="p-2 2xl:p-3 text-white/80 hover:text-red-400 rounded-full transition"
                 title="Delete Status"
               >
-                <Trash2 className="w-5 h-5" />
+                <Trash2 className="w-5 h-5 2xl:w-6 2xl:h-6" />
               </button>
             )}
             <button
               onClick={onClose}
-              className="p-2 text-white/80 hover:text-white rounded-full transition"
+              className="p-2 2xl:p-3 text-white/80 hover:text-white rounded-full transition"
             >
-              <X className="w-6 h-6" />
+              <X className="w-6 h-6 2xl:w-7 2xl:h-7" />
             </button>
           </div>
         </div>
@@ -150,10 +150,10 @@ export const StatusViewerModal = ({ userGroup, onClose, isMine = false, onDelete
         <div className="flex-1 relative flex items-center justify-center w-full h-full overflow-hidden">
           {activeStatus.type === 'text' ? (
             <div
-              className="w-full h-full flex items-center justify-center p-8 text-center"
+              className="w-full h-full flex items-center justify-center p-8 2xl:p-12 text-center"
               style={{ backgroundColor: activeStatus.backgroundColor || '#075E54' }}
             >
-              <p className="text-2xl sm:text-3xl font-bold text-white leading-relaxed max-w-md break-words font-sans">
+              <p className="text-2xl sm:text-3xl 2xl:text-4xl 3xl:text-5xl font-bold text-white leading-relaxed max-w-md 2xl:max-w-xl break-words font-sans">
                 {activeStatus.content}
               </p>
             </div>
@@ -165,7 +165,7 @@ export const StatusViewerModal = ({ userGroup, onClose, isMine = false, onDelete
                 className="w-full h-full object-contain"
               />
               {activeStatus.caption && (
-                <div className="absolute bottom-16 left-4 right-4 bg-black/60 backdrop-blur-sm p-3 rounded-xl text-center text-sm text-white font-medium">
+                <div className="absolute bottom-16 left-4 right-4 bg-black/60 backdrop-blur-sm p-3 2xl:p-4 rounded-xl 2xl:rounded-2xl text-center text-sm 2xl:text-base text-white font-medium">
                   {activeStatus.caption}
                 </div>
               )}

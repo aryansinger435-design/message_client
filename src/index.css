@@ -3,9 +3,45 @@
 @tailwind utilities;
 
 @layer base {
-  body {
-    @apply bg-[#0b141a] text-[#e9edef] overflow-hidden select-none font-['Plus_Jakarta_Sans',sans-serif];
+  html, body, #root {
+    height: 100%;
+    height: 100dvh;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    @apply bg-[#0c1317] text-[#e9edef] overflow-hidden select-none font-['Plus_Jakarta_Sans',sans-serif];
+    -webkit-tap-highlight-color: transparent;
   }
+}
+
+/* Mobile Dynamic Viewport Height & Safe Area */
+.h-dvh {
+  height: 100vh;
+  height: 100dvh;
+}
+
+.min-h-dvh {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.max-h-dvh {
+  max-height: 100vh;
+  max-height: 100dvh;
+}
+
+.pb-safe {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+}
+
+.pt-safe {
+  padding-top: max(0.5rem, env(safe-area-inset-top, 0px));
+}
+
+/* Touch-optimized smooth scrolling */
+.touch-scroll {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
 }
 
 /* Custom Scrollbar - WhatsApp Style */
@@ -33,6 +69,39 @@
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Fluid Reading Corridor across 1080p, 2K & 4K displays */
+.reading-corridor {
+  width: 100%;
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+@media (min-width: 1280px) {
+  .reading-corridor {
+    max-width: 1050px;
+  }
+}
+@media (min-width: 1536px) {
+  .reading-corridor {
+    max-width: 1200px;
+  }
+}
+@media (min-width: 1920px) {
+  .reading-corridor {
+    max-width: 1380px;
+  }
+}
+@media (min-width: 2560px) {
+  .reading-corridor {
+    max-width: 1650px;
+  }
+}
+@media (min-width: 3840px) {
+  .reading-corridor {
+    max-width: 2100px;
+  }
 }
 
 /* 1. SIGNATURE WHATSAPP OBSIDIAN WALLPAPER (DEFAULT) */
@@ -63,7 +132,68 @@
     url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7z' fill='%2310b981' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
 }
 
-/* 4. LIGHT THEME WALLPAPER */
+/* 4. LIGHT THEME WHATSAPP DESIGN (html:not(.dark)) */
+html:not(.dark) body,
+html:not(.dark) #root {
+  background-color: #efeae2 !important;
+  color: #111b21 !important;
+}
+
+html:not(.dark) .bg-\[\#0c1317\],
+html:not(.dark) .bg-\[\#0b141a\] {
+  background-color: #efeae2 !important;
+}
+
+html:not(.dark) .bg-\[\#111b21\] {
+  background-color: #ffffff !important;
+}
+
+html:not(.dark) .bg-\[\#202c33\] {
+  background-color: #f0f2f5 !important;
+}
+
+html:not(.dark) .bg-\[\#2a3942\] {
+  background-color: #e9edef !important;
+}
+
+html:not(.dark) .border-\[\#222d34\],
+html:not(.dark) .border-\[\#2a3942\] {
+  border-color: #e9edef !important;
+}
+
+html:not(.dark) .text-white {
+  color: #111b21 !important;
+}
+
+html:not(.dark) .text-\[\#e9edef\] {
+  color: #111b21 !important;
+}
+
+html:not(.dark) .text-\[\#8696a0\] {
+  color: #54656f !important;
+}
+
+html:not(.dark) input {
+  color: #111b21 !important;
+}
+
+html:not(.dark) input::placeholder {
+  color: #8696a0 !important;
+}
+
+html:not(.dark) .hover\:bg-\[\#202c33\]:hover,
+html:not(.dark) .hover\:bg-\[\#2a3942\]:hover {
+  background-color: #f5f6f6 !important;
+}
+
+html:not(.dark) .hover\:bg-\[\#111b21\]:hover {
+  background-color: #e9edef !important;
+}
+
+html:not(.dark) .bg-\[\#202c33\]\/95 {
+  background-color: rgba(240, 242, 245, 0.95) !important;
+}
+
 html:not(.dark) .chat-wallpaper,
 html:not(.dark) .wallpaper-obsidian,
 html:not(.dark) .wallpaper-light {
@@ -86,14 +216,21 @@ html:not(.dark) .wallpaper-light {
 }
 
 html:not(.dark) .bubble-outgoing {
-  background: linear-gradient(135deg, #d9fdd3 0%, #d4f8ce 100%);
-  color: #111b21;
+  background: linear-gradient(135deg, #d9fdd3 0%, #d4f8ce 100%) !important;
+  color: #111b21 !important;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1) !important;
 }
 
 html:not(.dark) .bubble-incoming {
-  background: #ffffff;
-  color: #111b21;
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  background: #ffffff !important;
+  color: #111b21 !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1) !important;
+}
+
+html:not(.dark) .bubble-outgoing .text-white,
+html:not(.dark) .bubble-incoming .text-white {
+  color: #111b21 !important;
 }
 
 /* Animations */

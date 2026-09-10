@@ -79,13 +79,13 @@ export const NewChatModal = ({ onClose, onChatCreated }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
-      <div className="relative w-full max-w-md bg-[#111b21] border border-[#222d34] rounded-2xl shadow-2xl p-6 overflow-hidden flex flex-col max-h-[85vh]">
+      <div className="relative w-full max-w-md 2xl:max-w-lg 3xl:max-w-xl bg-[#111b21] border border-[#222d34] rounded-2xl 2xl:rounded-3xl shadow-2xl p-4 sm:p-6 2xl:p-8 overflow-hidden flex flex-col max-h-[90dvh]">
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-[#222d34]">
           <div className="flex gap-2">
             <button
               onClick={() => setActiveTab('direct')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+              className={`px-3 py-1.5 2xl:px-4 2xl:py-2 rounded-lg text-xs 2xl:text-sm font-bold transition ${
                 activeTab === 'direct'
                   ? 'bg-[#00a884] text-[#111b21]'
                   : 'bg-[#202c33] text-[#8696a0] hover:text-white'
@@ -95,7 +95,7 @@ export const NewChatModal = ({ onClose, onChatCreated }) => {
             </button>
             <button
               onClick={() => setActiveTab('group')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+              className={`px-3 py-1.5 2xl:px-4 2xl:py-2 rounded-lg text-xs 2xl:text-sm font-bold transition ${
                 activeTab === 'group'
                   ? 'bg-[#00a884] text-[#111b21]'
                   : 'bg-[#202c33] text-[#8696a0] hover:text-white'
@@ -108,7 +108,7 @@ export const NewChatModal = ({ onClose, onChatCreated }) => {
             onClick={onClose}
             className="p-1 rounded-full text-[#8696a0] hover:text-white hover:bg-[#202c33] transition"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5 2xl:w-6 2xl:h-6" />
           </button>
         </div>
 
@@ -123,7 +123,7 @@ export const NewChatModal = ({ onClose, onChatCreated }) => {
               placeholder="e.g. Project AuraWave"
               value={groupName}
               onChange={(e) => setGroupName(e.target.value)}
-              className="w-full bg-[#202c33] border border-[#2a3942] rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-[#8696a0] focus:outline-none focus:border-[#00a884]"
+              className="w-full bg-[#202c33] border border-[#2a3942] rounded-xl px-3.5 py-2.5 text-base sm:text-sm text-white placeholder-[#8696a0] focus:outline-none focus:border-[#00a884]"
             />
             <p className="text-[11px] text-[#8696a0] mt-1">
               Selected: {selectedUsers.length} participants
@@ -140,7 +140,7 @@ export const NewChatModal = ({ onClose, onChatCreated }) => {
               placeholder="Search contacts..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-[#202c33] border border-[#2a3942] rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-[#8696a0] focus:outline-none focus:border-[#00a884]"
+              className="w-full bg-[#202c33] border border-[#2a3942] rounded-xl pl-10 pr-4 py-2.5 text-base sm:text-sm text-white placeholder-[#8696a0] focus:outline-none focus:border-[#00a884]"
             />
           </div>
         </div>

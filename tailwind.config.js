@@ -7,6 +7,17 @@ export default {
   darkMode: 'class',
   theme: {
     extend: {
+      screens: {
+        'xs': '400px',
+        'sm': '640px',
+        'md': '768px',
+        'lg': '1024px',
+        'xl': '1280px',
+        '2xl': '1536px',
+        '3xl': '1920px', // 1080p Full HD
+        '4xl': '2560px', // 2K QHD
+        '5xl': '3840px', // 4K UHD
+      },
       colors: {
         aura: {
           50: '#f0fdf4',

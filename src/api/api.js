@@ -1,6 +1,18 @@
 import axios from 'axios';
 
-const rawUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const getDefaultBaseUrl = () => {
+  if (
+    typeof window !== 'undefined' &&
+    window.location.hostname &&
+    window.location.hostname !== 'localhost' &&
+    window.location.hostname !== '127.0.0.1'
+  ) {
+    return `http://${window.location.hostname}:5000`;
+  }
+  return 'http://localhost:5000';
+};
+
+const rawUrl = import.meta.env.VITE_API_URL || getDefaultBaseUrl();
 export const API_BASE_URL = rawUrl.replace(/\/+$/, '');
 
 const api = axios.create({
@@ -27,8 +39,12 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      // If token expired or invalid, can clear or prompt
-      console.warn('Session expired or unauthorized');
+      console.warn('Session expired or unauthorized - clearing stale token');
+      localStorage.removeItem('aurawave_token');
+      localStorage.removeItem('aurawave_user');
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('aurawave-unauthorized'));
+      }
     }
     return Promise.reject(error);
   }
