@@ -1,15 +1,19 @@
 import axios from 'axios';
 
 const getDefaultBaseUrl = () => {
-  if (
-    typeof window !== 'undefined' &&
-    window.location.hostname &&
-    window.location.hostname !== 'localhost' &&
-    window.location.hostname !== '127.0.0.1'
-  ) {
-    return `http://${window.location.hostname}:5000`;
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    // Local development
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return 'http://localhost:5000';
+    }
+    // Local network testing on WiFi (e.g. mobile testing on 192.168.x.x)
+    if (hostname.startsWith('192.168.') || hostname.startsWith('10.') || hostname.startsWith('172.')) {
+      return `http://${hostname}:5000`;
+    }
   }
-  return 'http://localhost:5000';
+  // Live Production Backend on Render
+  return 'https://message-server-uaik.onrender.com';
 };
 
 const rawUrl = import.meta.env.VITE_API_URL || getDefaultBaseUrl();
